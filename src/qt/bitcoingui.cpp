@@ -327,10 +327,27 @@ void BitcoinGUI::createActions()
     privatesendAction->setStatusTip(tr("View the privatesend/mixing functions"));
     privatesendAction->setToolTip(privatesendAction->statusTip());
     privatesendAction->setCheckable(true);
+#ifdef Q_OS_MAC
+    privatesendAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_7));
+#else
     privatesendAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_7));
+#endif
     tabGroup->addAction(privatesendAction);
     connect(privatesendAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
     connect(privatesendAction, SIGNAL(triggered()), this, SLOT(gotoPrivateSendPage()));
+
+    coldinterestAction = new QAction(platformStyle->SingleColorIcon(":/icons/coldinterest"), tr("&Cold Interest"), this);
+    coldinterestAction->setStatusTip(tr("View the cold interest function"));
+    coldinterestAction->setToolTip(coldinterestAction->statusTip());
+    coldinterestAction->setCheckable(true);
+#ifdef Q_OS_MAC
+    coldinterestAction->setShortcut(QKeySequence(Qt::CTRL + Qt::Key_8));
+#else
+    coldinterestAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_8));
+#endif
+    tabGroup->addAction(coldinterestAction);
+    connect(coldinterestAction, SIGNAL(triggered()), this, SLOT(showNormalIfMinimized()));
+    connect(coldinterestAction, SIGNAL(triggered()), this, SLOT(gotocoldinterestPage()));
 
     // These showNormalIfMinimized are needed because Send Coins and Receive Coins
     // can be triggered from the tray menu, and need to show the GUI to be useful.
@@ -634,6 +651,7 @@ void BitcoinGUI::createToolBars()
         appNavigationBar->addAction(masternodeAction);
         appNavigationBar->addAction(governanceAction);
         appNavigationBar->addAction(privatesendAction);
+        appNavigationBar->addAction(coldinterestAction);
         appNavigationBar->buildUi();
         overviewAction->setChecked(true);
     }
@@ -821,6 +839,7 @@ void BitcoinGUI::setWalletActionsEnabled(bool enabled)
     masternodeAction->setEnabled(enabled);
     governanceAction->setEnabled(enabled);
     privatesendAction->setEnabled(enabled);
+    coldinterestAction->setEnabled(enabled);
     encryptWalletAction->setEnabled(enabled);
     backupWalletAction->setEnabled(enabled);
     changePassphraseAction->setEnabled(enabled);
@@ -1012,6 +1031,12 @@ void BitcoinGUI::gotoPrivateSendPage()
 {
     privatesendAction->setChecked(true);
     if (walletFrame) walletFrame->gotoPrivateSendPage();
+}
+
+void BitcoinGUI::gotoColdInterestPage()
+{
+    privatesendAction->setChecked(true);
+    if (walletFrame) walletFrame->gotoColdInterestPage();
 }
 
 void BitcoinGUI::gotoReceiveCoinsPage()

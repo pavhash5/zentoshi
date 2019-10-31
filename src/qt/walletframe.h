@@ -76,6 +76,8 @@ public Q_SLOTS:
     void gotoGovernancePage();
     /** Switch to privatesend page */
     void gotoPrivateSendPage();
+    /** Switch to coldinterest page */
+    void gotoColdInterestPage();
     /** Switch to receive coins page */
     void gotoReceiveCoinsPage();
     /** Switch to send coins page */

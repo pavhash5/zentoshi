@@ -15,6 +15,7 @@ class BitcoinGUI;
 class ClientModel;
 class OverviewPage;
 class PlatformStyle;
+class ColdInterestPage;
 class PrivateSendPage;
 class ReceiveCoinsDialog;
 class SendCoinsDialog;
@@ -71,6 +72,7 @@ private:
     MasternodeList *masternodeListPage;
     GovernanceList *governanceListPage;
     PrivateSendPage *privatesendPage;
+    ColdInterestPage *coldinterestPage;
 
     TransactionView *transactionView;
 
@@ -88,6 +90,8 @@ public Q_SLOTS:
     void gotoGovernancePage();
     /** Switch to privatesend page */
     void gotoPrivateSendPage();
+    /** Switch to coldinterest page */
+    void gotoColdInterestPage();
     /** Switch to receive coins page */
     void gotoReceiveCoinsPage();
     /** Switch to send coins page */

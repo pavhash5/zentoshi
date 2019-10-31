@@ -141,6 +141,7 @@ private:
     QAction* masternodeAction = nullptr;
     QAction* governanceAction = nullptr;
     QAction* privatesendAction = nullptr;
+    QAction* coldinterestAction = nullptr;
     QAction* quitAction = nullptr;
     QAction* sendCoinsAction = nullptr;
     QAction* sendCoinsMenuAction = nullptr;
@@ -295,6 +296,8 @@ public Q_SLOTS:
     void gotoGovernancePage();
     /** Switch to privatesend page */
     void gotoPrivateSendPage();
+    /** Switch to coldinterest page */
+    void gotoColdInterestPage();
     /** Switch to receive coins page */
     void gotoReceiveCoinsPage();
     /** Switch to send coins page */

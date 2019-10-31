@@ -222,6 +222,11 @@ void WalletView::gotoPrivateSendPage()
     setCurrentWidget(privatesendPage);
 }
 
+void WalletView::gotoColdInterestPage()
+{
+    setCurrentWidget(governanceListPage /*coldinterestPage*/);
+}
+
 void WalletView::gotoSendCoinsPage(QString addr)
 {
     setCurrentWidget(sendCoinsPage);

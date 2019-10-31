@@ -63,6 +63,7 @@
         <file alias="chainlocks_inactive">res/icons/chainlocks_inactive.png</file>
         <file alias="quorum_active">res/icons/quorum_active.png</file>
         <file alias="quorum_inactive">res/icons/quorum_inactive.png</file>
+        <file alias="coldinterest">res/icons/coldinterest.png</file>
     </qresource>
     <qresource prefix="/movies">
         <file alias="spinner-000">res/movies/spinner-000.png</file>
