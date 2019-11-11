@@ -860,9 +860,10 @@ public:
     // There is no final sorting before sending, as they are always sent immediately
     // and in the order requested.
     std::vector<uint256> vInventoryBlockToSend GUARDED_BY(cs_inventory);
+    CCriticalSection cs_inventory;
+
     // List of non-tx/non-block inventory items
     std::vector<CInv> vInventoryOtherToSend GUARDED_BY(cs_inventory);
-    CCriticalSection cs_inventory;
     std::unordered_set<uint256, StaticSaltedHasher> setAskFor;
     std::unordered_set<uint256, StaticSaltedHasher> setAskForInQueue;
     std::priority_queue<std::pair<int64_t, CInv>, std::vector<std::pair<int64_t, CInv>>, std::greater<>> queueAskFor;
@@ -931,6 +932,11 @@ public:
 
     std::set<uint256> orphan_work_set;
 
+    CNode(NodeId id, ServiceFlags nLocalServicesIn, int nMyStartingHeightIn, SOCKET hSocketIn, const CAddress &addrIn, uint64_t nKeyedNetGroupIn, uint64_t nLocalHostNonceIn, const CAddress &addrBindIn, const std::string &addrNameIn = "", bool fInboundIn = false, bool block_relay_only = false);
+    ~CNode();
+    CNode(const CNode&) = delete;
+    CNode& operator=(const CNode&) = delete;
+
     // If true, we will send him PrivateSend queue messages
     std::atomic<bool> fSendDSQueue{false};
 
@@ -940,11 +946,6 @@ public:
     uint256 receivedMNAuthChallenge;
     uint256 verifiedProRegTxHash;
     uint256 verifiedPubKeyHash;
-
-    CNode(NodeId id, ServiceFlags nLocalServicesIn, int nMyStartingHeightIn, SOCKET hSocketIn, const CAddress &addrIn, uint64_t nKeyedNetGroupIn, uint64_t nLocalHostNonceIn, const CAddress &addrBindIn, const std::string &addrNameIn = "", bool fInboundIn = false);
-    ~CNode();
-    CNode(const CNode&) = delete;
-    CNode& operator=(const CNode&) = delete;
 
 private:
     const NodeId id;
@@ -1058,29 +1059,14 @@ public:
 
     void PushInventory(const CInv& inv)
     {
-        if (inv.type == MSG_TX) {
-            if (!filterInventoryKnown.contains(inv.hash)) {
-                LogPrint(BCLog::NET, "PushInventory --  inv: %s peer=%d\n", inv.ToString(), id);
-                setInventoryTxToSend.insert(inv.hash);
-            } else {
-                LogPrint(BCLog::NET, "PushInventory --  filtered inv: %s peer=%d\n", inv.ToString(), id);
-            }
-        } else if (inv.type == MSG_BLOCK) {
-            LogPrint(BCLog::NET, "PushInventory --  inv: %s peer=%d\n", inv.ToString(), id);
-            LOCK(m_tx_relay.cs_tx_inventory);
-            if (!m_tx_relay.filterInventoryKnown.contains(inv.hash)) {
-                m_tx_relay.setInventoryTxToSend.insert(inv.hash);
+        if (inv.type == MSG_TX && m_tx_relay != nullptr) {
+            LOCK(m_tx_relay->cs_tx_inventory);
+            if (!m_tx_relay->filterInventoryKnown.contains(inv.hash)) {
+                m_tx_relay->setInventoryTxToSend.insert(inv.hash);
             }
         } else if (inv.type == MSG_BLOCK) {
             LOCK(cs_inventory);
             vInventoryBlockToSend.push_back(inv.hash);
-        } else {
-            if (!filterInventoryKnown.contains(inv.hash)) {
-                LogPrint(BCLog::NET, "PushInventory --  inv: %s peer=%d\n", inv.ToString(), id);
-                vInventoryOtherToSend.push_back(inv);
-            } else {
-                LogPrint(BCLog::NET, "PushInventory --  filtered inv: %s peer=%d\n", inv.ToString(), id);
-            }
         }
     }
 
@@ -1091,6 +1077,7 @@ public:
     }
 
     void AskFor(const CInv& inv, int64_t doubleRequestDelay = 2 * 60 * 1000000);
+
     void RemoveAskFor(const uint256& hash);
 
     void CloseSocketDisconnect();

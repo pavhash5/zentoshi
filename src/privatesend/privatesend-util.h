@@ -10,7 +10,7 @@
 class CKeyHolder
 {
 private:
-    CReserveKey reserveKey;
+    ReserveDestination reserveKey;
     CPubKey pubKey;
 
 public:

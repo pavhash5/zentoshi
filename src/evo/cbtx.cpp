@@ -19,30 +19,30 @@
 bool CheckCbTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
 {
     if (tx.nType != TRANSACTION_COINBASE) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-type");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, REJECT_INVALID, "bad-cbtx-type");
     }
 
     if (!tx.IsCoinBase()) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-invalid");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, REJECT_INVALID, "bad-cbtx-invalid");
     }
 
     CCbTx cbTx;
     if (!GetTxPayload(tx, cbTx)) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-payload");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, REJECT_INVALID, "bad-cbtx-payload");
     }
 
     if (cbTx.nVersion == 0 || cbTx.nVersion > CCbTx::CURRENT_VERSION) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-version");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, REJECT_INVALID, "bad-cbtx-version");
     }
 
     if (pindexPrev && pindexPrev->nHeight + 1 != cbTx.nHeight) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-height");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, REJECT_INVALID, "bad-cbtx-height");
     }
 
     if (pindexPrev) {
         bool fDIP0008Active = VersionBitsState(pindexPrev, Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == ThresholdState::ACTIVE;
         if (fDIP0008Active && cbTx.nVersion < 2) {
-            return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-version");
+            return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, REJECT_INVALID, "bad-cbtx-version");
         }
     }
 
@@ -67,7 +67,7 @@ bool CheckCbTxMerkleRoots(const CBlock& block, const CBlockIndex* pindex, CValid
 
     CCbTx cbTx;
     if (!GetTxPayload(*block.vtx[isProofOfStake], cbTx)) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-payload");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, REJECT_INVALID, "bad-cbtx-payload");
     }
 
     int64_t nTime2 = GetTimeMicros(); nTimePayload += nTime2 - nTime1;
@@ -76,10 +76,10 @@ bool CheckCbTxMerkleRoots(const CBlock& block, const CBlockIndex* pindex, CValid
     if (pindex) {
         uint256 calculatedMerkleRoot;
         if (!CalcCbTxMerkleRootMNList(block, pindex->pprev, calculatedMerkleRoot, state)) {
-            return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-mnmerkleroot");
+            return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, REJECT_INVALID, "bad-cbtx-mnmerkleroot");
         }
         if (calculatedMerkleRoot != cbTx.merkleRootMNList) {
-            return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-mnmerkleroot");
+            return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, REJECT_INVALID, "bad-cbtx-mnmerkleroot");
         }
 
         int64_t nTime3 = GetTimeMicros(); nTimeMerkleMNL += nTime3 - nTime2;
@@ -87,10 +87,10 @@ bool CheckCbTxMerkleRoots(const CBlock& block, const CBlockIndex* pindex, CValid
 
         if (cbTx.nVersion >= 2) {
             if (!CalcCbTxMerkleRootQuorums(block, pindex->pprev, calculatedMerkleRoot, state)) {
-                return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-quorummerkleroot");
+                return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, REJECT_INVALID, "bad-cbtx-quorummerkleroot");
             }
             if (calculatedMerkleRoot != cbTx.merkleRootQuorums) {
-                return state.DoS(100, false, REJECT_INVALID, "bad-cbtx-quorummerkleroot");
+                return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, REJECT_INVALID, "bad-cbtx-quorummerkleroot");
             }
         }
 

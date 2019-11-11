@@ -521,7 +521,7 @@ bool CInstantSendManager::CheckCanLock(const COutPoint& outpoint, bool printDebu
     {
         LOCK(cs_main);
         pindexMined = mapBlockIndex.at(hashBlock);
-        nTxAge = chainActive.Height() - pindexMined->nHeight + 1;
+        nTxAge = ::ChainActive().Height() - pindexMined->nHeight + 1;
     }
 
     if (nTxAge < nInstantSendConfirmationsRequired) {
@@ -737,7 +737,7 @@ bool CInstantSendManager::ProcessPendingInstantSendLocks()
     int tipHeight;
     {
         LOCK(cs_main);
-        tipHeight = chainActive.Height();
+        tipHeight = ::ChainActive().Height();
     }
 
     auto llmqType = Params().GetConsensus().llmqTypeInstantSend;
@@ -1311,7 +1311,7 @@ void CInstantSendManager::RemoveChainLockConflictingLock(const uint256& islockHa
     int tipHeight;
     {
         LOCK(cs_main);
-        tipHeight = chainActive.Height();
+        tipHeight = ::ChainActive().Height();
     }
 
     LOCK(cs);

@@ -18,8 +18,8 @@
 #include <tinyformat.h>
 #include <ui_interface.h>
 #include <validationinterface.h>
-#include <script/ismine.h>
 #include <script/sign.h>
+#include <script/signingprovider.h>
 #include <util/system.h>
 #include <util/strencodings.h>
 #include <wallet/crypter.h>
@@ -107,6 +107,8 @@ bool AutoBackupWallet (std::shared_ptr<CWallet> wallet, const std::string& strWa
 class CBlockIndex;
 class CCoinControl;
 class COutput;
+class CReserveKey;
+class SigningProvider;
 class CScript;
 class CWalletTx;
 struct FeeCalculation;
@@ -139,6 +141,17 @@ enum AvailableCoinsType
     ONLY_NONDENOMINATED,
     ONLY_MASTERNODE_COLLATERAL,
     ONLY_PRIVATESEND_COLLATERAL
+};
+
+struct CompactTallyItem
+{
+    CTxDestination txdest;
+    CAmount nAmount;
+    std::vector<COutPoint> vecOutPoints;
+    CompactTallyItem()
+    {
+        nAmount = 0;
+    }
 };
 
 //! Default for -addresstype
@@ -393,6 +406,10 @@ struct COutputEntry
  * a CWalletTx, but the deserialized values are discarded.**/
 class CMerkleTx
 {
+private:
+  /** Constant used in hashBlock to indicate tx has been abandoned */
+    static const uint256 ABANDON_HASH;
+
 public:
     CTransactionRef tx;
     uint256 hashBlock;
@@ -439,6 +456,7 @@ public:
         uint256 hashBlock;
         std::vector<uint256> vMerkleBranch;
         int nIndex;
+    }
 
     void SetMerkleBranch(const CBlockIndex* pIndex, int posInBlock);
 
@@ -475,15 +493,10 @@ int CalculateMaximumSignedInputSize(const CTxOut& txout, const CWallet* pwallet,
  * A transaction with a bunch of additional info that only the owner cares about.
  * It includes any unrecorded transactions needed to link it back to the block chain.
  */
-class CWalletTx
+class CWalletTx : public CMerkleTx
 {
 private:
     const CWallet* pwallet;
-
-    /** Constant used in hashBlock to indicate tx has been abandoned, only used at
-     * serialization/deserialization to avoid ambiguity with conflicted.
-     */
-    static const uint256 ABANDON_HASH;
 
 public:
     /**
@@ -1316,14 +1329,12 @@ public:
      */
     bool CreateTransaction(interfaces::Chain::Lock& locked_chain, const std::vector<CRecipient>& vecSend, CTransactionRef& tx, CReserveKey& reservekey, CAmount& nFeeRet, int& nChangePosInOut, std::string& strFailReason, const CCoinControl& coin_control, bool sign = true, AvailableCoinsType nCoinType = ALL_COINS, bool fUseInstantSend = false, int nExtraPayloadSize = 0);
     bool CreateTransaction(const std::vector<CRecipient>& vecSend, CTransactionRef& tx, CReserveKey& reservekey, CAmount& nFeeRet, int& nChangePosInOut, std::string& strFailReason, const CCoinControl& coin_control, bool sign = true, AvailableCoinsType nCoinType = ALL_COINS, bool fUseInstantSend = false, int nExtraPayloadSize = 0);
-    bool CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, CAmount blockReward, CMutableTransaction& txNew, unsigned int& nTxNewTime, std::vector<const CWalletTx *> &vwtxPrev, bool fGenerateSegwit);
+    bool CreateCoinStake(const FillableSigningProvider& keystore, unsigned int nBits, CAmount blockReward, CMutableTransaction& txNew, unsigned int& nTxNewTime, std::vector<const CWalletTx *> &vwtxPrev, bool fGenerateSegwit);
     bool CommitTransaction(CTransactionRef tx, mapValue_t mapValue, std::vector<std::pair<std::string, std::string>> orderForm, CReserveKey& reservekey, CConnman* connman, CValidationState& state);
     bool CommitTransaction(CTransactionRef tx, mapValue_t mapValue, std::vector<std::pair<std::string, std::string>> orderForm, std::string fromAccount, CReserveKey& reservekey, CConnman* connman, CValidationState& state, std::string strCommand = NetMsgType::TX);
     bool CreateCollateralTransaction(CMutableTransaction& txCollateral, std::string& strReason);
     bool ConvertList(std::vector<CTxIn> vecTxIn, std::vector<CAmount>& vecAmounts);
-    bool CreateTransaction(interfaces::Chain::Lock& locked_chain, const std::vector<CRecipient>& vecSend, CTransactionRef& tx, ReserveDestination& reservedest, CAmount& nFeeRet, int& nChangePosInOut,
-    bool CreateTransaction(interfaces::Chain::Lock& locked_chain, const std::vector<CRecipient>& vecSend, CTransactionRef& tx, CAmount& nFeeRet, int& nChangePosInOut,
-                           std::string& strFailReason, const CCoinControl& coin_control, bool sign = true);
+    bool CreateTransaction(interfaces::Chain::Lock& locked_chain, const std::vector<CRecipient>& vecSend, CTransactionRef& tx, CAmount& nFeeRet, int& nChangePosInOut, std::string& strFailReason, const CCoinControl& coin_control, bool sign = true);
     bool CommitTransaction(CTransactionRef tx, mapValue_t mapValue, std::vector<std::pair<std::string, std::string>> orderForm, CValidationState& state);
 
     bool DummySignTx(CMutableTransaction &txNew, const std::set<CTxOut> &txouts, bool use_max_sig = false) const
@@ -1597,8 +1608,8 @@ public:
     /** Add a KeyOriginInfo to the wallet */
     bool AddKeyOrigin(const CPubKey& pubkey, const KeyOriginInfo& info);
 
-    void NotifyTransactionLock(const CTransaction &tx, const llmq::CInstantSendLock& islock) override;
-    void NotifyChainLock(const CBlockIndex* pindexChainLock, const llmq::CChainLockSig& clsig) override;
+    void NotifyTransactionLock(const CTransaction &tx, const llmq::CInstantSendLock& islock);
+    void NotifyChainLock(const CBlockIndex* pindexChainLock, const llmq::CChainLockSig& clsig);
 
     friend struct WalletTestingSetup;
 };

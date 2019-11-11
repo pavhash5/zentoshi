@@ -11,7 +11,6 @@
 #ifdef ENABLE_WALLET
 #include <privatesend/privatesend-client.h>
 #endif // ENABLE_WALLET
-#include "validation.h"
 
 #include "evo/deterministicmns.h"
 #include "evo/mnauth.h"
@@ -24,7 +23,7 @@
 void CDSNotificationInterface::InitializeCurrentBlockTip()
 {
     LOCK(cs_main);
-    UpdatedBlockTip(chainActive.Tip(), nullptr, IsInitialBlockDownload());
+    UpdatedBlockTip(::ChainActive().Tip(), nullptr, ::ChainstateActive().IsInitialBlockDownload());
 }
 
 void CDSNotificationInterface::AcceptedBlockHeader(const CBlockIndex *pindexNew)

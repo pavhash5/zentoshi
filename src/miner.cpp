@@ -155,10 +155,10 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     // This looks slightly dim, but the key is that once it is active - it remains active.
     bool fDIP0003Active_context = sporkManager.IsSporkActive(SPORK_15_DETERMINISTIC_MNS_ENABLED) ||
                                   (nHeight >= chainparams.GetConsensus().DIP0003Height &&
-                                   VersionBitsState(chainActive.Tip(), chainparams.GetConsensus(), Consensus::DEPLOYMENT_DIP0003, versionbitscache) == ThresholdState::ACTIVE);
+                                   VersionBitsState(::ChainActive().Tip(), chainparams.GetConsensus(), Consensus::DEPLOYMENT_DIP0003, versionbitscache) == ThresholdState::ACTIVE);
     bool fDIP0008Active_context = sporkManager.IsSporkActive(SPORK_17_QUORUM_DKG_ENABLED) ||
                                   (nHeight >= chainparams.GetConsensus().DIP0008Height &&
-                                   VersionBitsState(chainActive.Tip(), chainparams.GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == ThresholdState::ACTIVE);
+                                   VersionBitsState(::ChainActive().Tip(), chainparams.GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == ThresholdState::ACTIVE);
 
     LogPrintf("BlockAssembler::CreateNewBlock - DIP0003 %s DIP0008 %s\n", fDIP0003Active_context ? "true" : "false", fDIP0008Active_context ? "true" : "false");
 
@@ -577,7 +577,7 @@ static bool ProcessBlockFound(const std::shared_ptr<const CBlock> &pblock, const
     // Found a solution
     {
         LOCK(cs_main);
-        if (pblock->hashPrevBlock != chainActive.Tip()->GetBlockHash())
+        if (pblock->hashPrevBlock != ::ChainActive().Tip()->GetBlockHash())
             return error("ProcessBlockFound -- generated block is stale");
     }
 
@@ -619,7 +619,7 @@ void static ZentoshiMiner(const CChainParams& chainparams, CConnman& connman, bo
 
             if(fProofOfStake)
             {
-                if (chainActive.Tip()->nHeight+1 < chainparams.GetConsensus().nFirstPoSBlock ||
+                if (::ChainActive().Tip()->nHeight+1 < chainparams.GetConsensus().nFirstPoSBlock ||
                     pwallet->IsLocked() || !masternodeSync.IsSynced())
                 {
                     nLastCoinStakeSearchInterval = 0;
@@ -632,7 +632,7 @@ void static ZentoshiMiner(const CChainParams& chainparams, CConnman& connman, bo
             // Create new block
             //
             unsigned int nTransactionsUpdatedLast = mempool.GetTransactionsUpdated();
-            CBlockIndex* pindexPrev = chainActive.Tip();
+            CBlockIndex* pindexPrev = ::ChainActive().Tip();
             if(!pindexPrev) break;
 
             BlockAssembler assembler(chainparams);
@@ -743,7 +743,7 @@ void static ZentoshiMiner(const CChainParams& chainparams, CConnman& connman, bo
                     break;
                 if (mempool.GetTransactionsUpdated() != nTransactionsUpdatedLast && GetTime() - nStart > 60)
                     break;
-                if (pindexPrev != chainActive.Tip())
+                if (pindexPrev != ::ChainActive().Tip())
                     break;
 
                 // Update nTime every few seconds

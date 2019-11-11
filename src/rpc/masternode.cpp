@@ -395,7 +395,7 @@ UniValue masternode_winners(const JSONRPCRequest& request)
     int nHeight;
     {
         LOCK(cs_main);
-        CBlockIndex* pindex = chainActive.Tip();
+        CBlockIndex* pindex = ::ChainActive().Tip();
         if (!pindex) return NullUniValue;
 
         nHeight = pindex->nHeight;
@@ -521,7 +521,7 @@ UniValue masternodelist(const JSONRPCRequest& request)
         }
 
         LOCK(cs_main);
-        const CBlockIndex* pindex = chainActive[dmn->pdmnState->nLastPaidHeight];
+        const CBlockIndex* pindex = ::ChainActive[dmn->pdmnState->nLastPaidHeight];
         return (int)pindex->nTime;
     };
 

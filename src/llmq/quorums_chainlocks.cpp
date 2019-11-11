@@ -221,7 +221,7 @@ void CChainLocksHandler::CheckActiveState()
     bool fDIP0008Active;
     {
         LOCK(cs_main);
-        fDIP0008Active = VersionBitsState(chainActive.Tip()->pprev, Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == ThresholdState::ACTIVE;
+        fDIP0008Active = VersionBitsState(::ChainActive().Tip()->pprev, Params().GetConsensus(), Consensus::DEPLOYMENT_DIP0008, versionbitscache) == ThresholdState::ACTIVE;
     }
 
     LOCK(cs);
@@ -256,7 +256,7 @@ void CChainLocksHandler::TrySignChainTip()
     const CBlockIndex* pindex;
     {
         LOCK(cs_main);
-        pindex = chainActive.Tip();
+        pindex = ::ChainActive().Tip();
     }
 
     if (!pindex->pprev) {
@@ -517,7 +517,7 @@ void CChainLocksHandler::EnforceBestChainLock()
         // Go backwards through the chain referenced by clsig until we find a block that is part of the main chain.
         // For each of these blocks, check if there are children that are NOT part of the chain referenced by clsig
         // and invalidate each of them.
-        while (pindex && !chainActive.Contains(pindex)) {
+        while (pindex && !::ChainActive().Contains(pindex)) {
             // Invalidate all blocks that have the same prevBlockHash but are not equal to blockHash
             auto itp = mapPrevBlockIndex.equal_range(pindex->pprev->GetBlockHash());
             for (auto jt = itp.first; jt != itp.second; ++jt) {
@@ -539,7 +539,7 @@ void CChainLocksHandler::EnforceBestChainLock()
             ResetBlockFailureFlags(mapBlockIndex.at(currentBestChainLockBlockIndex->GetBlockHash()));
         }
 
-        activateNeeded = chainActive.Tip()->GetAncestor(currentBestChainLockBlockIndex->nHeight) != currentBestChainLockBlockIndex;
+        activateNeeded = ::ChainActive().Tip()->GetAncestor(currentBestChainLockBlockIndex->nHeight) != currentBestChainLockBlockIndex;
     }
 
     CValidationState state;
@@ -551,7 +551,7 @@ void CChainLocksHandler::EnforceBestChainLock()
     {
         LOCK(cs_main);
         if (lastNotifyChainLockBlockIndex != currentBestChainLockBlockIndex &&
-            chainActive.Tip()->GetAncestor(currentBestChainLockBlockIndex->nHeight) == currentBestChainLockBlockIndex) {
+            ::ChainActive().Tip()->GetAncestor(currentBestChainLockBlockIndex->nHeight) == currentBestChainLockBlockIndex) {
             lastNotifyChainLockBlockIndex = currentBestChainLockBlockIndex;
             pindexNotify = currentBestChainLockBlockIndex;
         }
@@ -722,7 +722,7 @@ void CChainLocksHandler::Cleanup()
             it = txFirstSeenTime.erase(it);
         } else if (!hashBlock.IsNull()) {
             auto pindex = mapBlockIndex.at(hashBlock);
-            if (chainActive.Tip()->GetAncestor(pindex->nHeight) == pindex && chainActive.Height() - pindex->nHeight >= 6) {
+            if (::ChainActive().Tip()->GetAncestor(pindex->nHeight) == pindex && ::ChainActive().Height() - pindex->nHeight >= 6) {
                 // tx got confirmed >= 6 times, so we can stop keeping track of it
                 it = txFirstSeenTime.erase(it);
             } else {

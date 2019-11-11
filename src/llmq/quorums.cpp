@@ -302,7 +302,7 @@ std::vector<CQuorumCPtr> CQuorumManager::ScanQuorums(Consensus::LLMQType llmqTyp
     const CBlockIndex* pindex;
     {
         LOCK(cs_main);
-        pindex = chainActive.Tip();
+        pindex = ::ChainActive().Tip();
     }
     return ScanQuorums(llmqType, pindex, maxCount);
 }

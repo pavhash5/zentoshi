@@ -208,7 +208,7 @@ static UniValue getmininginfo(const JSONRPCRequest& request)
 
     LOCK(cs_main);
 
-    CBlockIndex* tip = chainActive.Tip();
+    CBlockIndex* tip = ::ChainActive().Tip();
     const Consensus::Params& consensusParams = Params().GetConsensus();
 
     UniValue obj(UniValue::VOBJ);
@@ -470,12 +470,12 @@ static UniValue getblocktemplate(const JSONRPCRequest& request)
     // Get expected MN/superblock payees. The call to GetBlockTxOuts might fail on regtest/devnet or when
     // testnet is reset. This is fine and we ignore failure (blocks will be accepted)
     std::vector<CTxOut> voutMasternodePayments;
-    mnpayments.GetBlockTxOuts(chainActive.Height() + 1, 0, voutMasternodePayments);
+    mnpayments.GetBlockTxOuts(::ChainActive().Height() + 1, 0, voutMasternodePayments);
 
     // next bock is a superblock and we need governance info to correctly construct it
     if (sporkManager.IsSporkActive(SPORK_9_SUPERBLOCKS_ENABLED)
         && !masternodeSync.IsSynced()
-        && CSuperblock::IsValidBlockHeight(chainActive.Height() + 1))
+        && CSuperblock::IsValidBlockHeight(::ChainActive().Height() + 1))
             throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "Zentoshi is syncing with network...");
 
     static unsigned int nTransactionsUpdatedLast;

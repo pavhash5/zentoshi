@@ -112,7 +112,7 @@ void ClientModel::refreshMasternodeList()
 int ClientModel::getNumBlocks() const
 {
     LOCK(cs_main);
-    return chainActive.Height();
+    return ::ChainActive().Height();
 }
 
 int ClientModel::getHeaderTipHeight() const

@@ -816,7 +816,7 @@ static void ThreadImport(std::vector<fs::path> vImportFiles)
 
     // force UpdatedBlockTip to initialize nCachedBlockHeight for DS, MN payments and budgets
     // but don't call it directly to prevent triggering of other listeners like zmq etc.
-    // GetMainSignals().UpdatedBlockTip(chainActive.Tip());
+    // GetMainSignals().UpdatedBlockTip(::ChainActive().Tip());
     pdsNotificationInterface->InitializeCurrentBlockTip();
 
     if (fMasternodeMode) {

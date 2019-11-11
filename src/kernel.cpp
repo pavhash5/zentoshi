@@ -236,7 +236,7 @@ static bool GetKernelStakeModifier(uint256 hashBlockFrom, unsigned int nTimeTx, 
     nStakeModifierTime = pindexFrom->GetBlockTime();
     int64_t nStakeModifierSelectionInterval = GetStakeModifierSelectionInterval();
     const CBlockIndex* pindex = pindexFrom;
-    CBlockIndex* pindexNext = chainActive[pindexFrom->nHeight + 1];
+    CBlockIndex* pindexNext = ::ChainActive[pindexFrom->nHeight + 1];
 
     // loop to find the stake modifier later by a selection interval
     while (nStakeModifierTime < pindexFrom->GetBlockTime() + nStakeModifierSelectionInterval) {
@@ -248,7 +248,7 @@ static bool GetKernelStakeModifier(uint256 hashBlockFrom, unsigned int nTimeTx, 
             return true;
         }
         pindex = pindexNext;
-        pindexNext = chainActive[pindexNext->nHeight + 1];
+        pindexNext = ::ChainActive[pindexNext->nHeight + 1];
         if (pindex->GeneratedStakeModifier()) {
             nStakeModifierHeight = pindex->nHeight;
             nStakeModifierTime = pindex->GetBlockTime();

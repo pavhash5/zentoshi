@@ -48,7 +48,7 @@ static bool CheckHashSig(const ProTx& proTx, const CKeyID& keyID, CValidationSta
 {
     std::string strError;
     if (!CHashSigner::VerifyHash(::SerializeHash(proTx), keyID, proTx.vchSig, strError)) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-sig", false, strError);
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-sig", false, strError);
     }
     return true;
 }
@@ -58,7 +58,7 @@ static bool CheckStringSig(const ProTx& proTx, const CKeyID& keyID, CValidationS
 {
     std::string strError;
     if (!CMessageSigner::VerifyMessage(keyID, proTx.vchSig, proTx.MakeSignString(), strError)) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-sig", false, strError);
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-sig", false, strError);
     }
     return true;
 }
@@ -67,7 +67,7 @@ template <typename ProTx>
 static bool CheckHashSig(const ProTx& proTx, const CBLSPublicKey& pubKey, CValidationState& state)
 {
     if (!proTx.sig.VerifyInsecure(pubKey, ::SerializeHash(proTx))) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-sig", false);
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-sig", false);
     }
     return true;
 }
@@ -77,7 +77,7 @@ static bool CheckInputsHash(const CTransaction& tx, const ProTx& proTx, CValidat
 {
     uint256 inputsHash = CalcTxInputsHash(tx);
     if (inputsHash != proTx.inputsHash) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-inputs-hash");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-inputs-hash");
     }
 
     return true;
@@ -86,22 +86,22 @@ static bool CheckInputsHash(const CTransaction& tx, const ProTx& proTx, CValidat
 bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
 {
     if (tx.nType != TRANSACTION_PROVIDER_REGISTER) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-type");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-type");
     }
 
     CProRegTx ptx;
     if (!GetTxPayload(tx, ptx)) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-payload");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-payload");
     }
 
     if (ptx.nVersion == 0 || ptx.nVersion > CProRegTx::CURRENT_VERSION) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-version");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-version");
     }
     if (ptx.nType != 0) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-type");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-type");
     }
     if (ptx.nMode != 0) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-mode");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-mode");
     }
 
     if (ptx.keyIDOwner.IsNull() || !ptx.pubKeyOperator.IsValid() || ptx.keyIDVoting.IsNull()) {
@@ -205,7 +205,7 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
     } else {
         // collateral is part of this ProRegTx, so we know the collateral is owned by the issuer
         if (!ptx.vchSig.empty()) {
-            return state.DoS(100, false, REJECT_INVALID, "bad-protx-sig");
+            return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-sig");
         }
     }
 
@@ -215,16 +215,16 @@ bool CheckProRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValid
 bool CheckProUpServTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
 {
     if (tx.nType != TRANSACTION_PROVIDER_UPDATE_SERVICE) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-type");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-type");
     }
 
     CProUpServTx ptx;
     if (!GetTxPayload(tx, ptx)) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-payload");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-payload");
     }
 
     if (ptx.nVersion == 0 || ptx.nVersion > CProRegTx::CURRENT_VERSION) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-version");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-version");
     }
 
     if (!CheckService(ptx.proTxHash, ptx, state)) {
@@ -235,7 +235,7 @@ bool CheckProUpServTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVa
         auto mnList = deterministicMNManager->GetListForBlock(pindexPrev);
         auto mn = mnList.GetMN(ptx.proTxHash);
         if (!mn) {
-            return state.DoS(100, false, REJECT_INVALID, "bad-protx-hash");
+            return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-hash");
         }
 
         // don't allow updating to addresses already used by other MNs
@@ -268,19 +268,19 @@ bool CheckProUpServTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVa
 bool CheckProUpRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
 {
     if (tx.nType != TRANSACTION_PROVIDER_UPDATE_REGISTRAR) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-type");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-type");
     }
 
     CProUpRegTx ptx;
     if (!GetTxPayload(tx, ptx)) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-payload");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-payload");
     }
 
     if (ptx.nVersion == 0 || ptx.nVersion > CProRegTx::CURRENT_VERSION) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-version");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-version");
     }
     if (ptx.nMode != 0) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-mode");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-mode");
     }
 
     if (!ptx.pubKeyOperator.IsValid() || ptx.keyIDVoting.IsNull()) {
@@ -300,7 +300,7 @@ bool CheckProUpRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVal
         auto mnList = deterministicMNManager->GetListForBlock(pindexPrev);
         auto dmn = mnList.GetMN(ptx.proTxHash);
         if (!dmn) {
-            return state.DoS(100, false, REJECT_INVALID, "bad-protx-hash");
+            return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-hash");
         }
 
         // don't allow reuse of payee key for other keys (don't allow people to put the payee key onto an online server)
@@ -311,13 +311,13 @@ bool CheckProUpRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVal
         Coin coin;
         if (!GetUTXOCoin(dmn->collateralOutpoint, coin)) {
             // this should never happen (there would be no dmn otherwise)
-            return state.DoS(100, false, REJECT_INVALID, "bad-protx-collateral");
+            return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-collateral");
         }
 
         // don't allow reuse of collateral key for other keys (don't allow people to put the collateral key onto an online server)
         CTxDestination collateralTxDest;
         if (!ExtractDestination(coin.out.scriptPubKey, collateralTxDest)) {
-            return state.DoS(100, false, REJECT_INVALID, "bad-protx-collateral-dest");
+            return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-collateral-dest");
         }
         if (collateralTxDest == CTxDestination(dmn->pdmnState->keyIDOwner) || collateralTxDest == CTxDestination(ptx.keyIDVoting)) {
             return state.DoS(10, false, REJECT_INVALID, "bad-protx-collateral-reuse");
@@ -350,29 +350,29 @@ bool CheckProUpRegTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CVal
 bool CheckProUpRevTx(const CTransaction& tx, const CBlockIndex* pindexPrev, CValidationState& state)
 {
     if (tx.nType != TRANSACTION_PROVIDER_UPDATE_REVOKE) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-type");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-type");
     }
 
     CProUpRevTx ptx;
     if (!GetTxPayload(tx, ptx)) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-payload");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-payload");
     }
 
     if (ptx.nVersion == 0 || ptx.nVersion > CProRegTx::CURRENT_VERSION) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-version");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-version");
     }
 
     // ptx.nReason < CProUpRevTx::REASON_NOT_SPECIFIED is always `false` since
     // ptx.nReason is unsigned and CProUpRevTx::REASON_NOT_SPECIFIED == 0
     if (ptx.nReason > CProUpRevTx::REASON_LAST) {
-        return state.DoS(100, false, REJECT_INVALID, "bad-protx-reason");
+        return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-reason");
     }
 
     if (pindexPrev) {
         auto mnList = deterministicMNManager->GetListForBlock(pindexPrev);
         auto dmn = mnList.GetMN(ptx.proTxHash);
         if (!dmn)
-            return state.DoS(100, false, REJECT_INVALID, "bad-protx-hash");
+            return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-protx-hash");
 
         if (!CheckInputsHash(tx, ptx, state))
             return false;

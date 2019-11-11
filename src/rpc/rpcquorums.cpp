@@ -53,7 +53,7 @@ UniValue quorum_list(const JSONRPCRequest& request)
     for (auto& p : Params().GetConsensus().llmqs) {
         UniValue v(UniValue::VARR);
 
-        auto quorums = llmq::quorumManager->ScanQuorums(p.first, chainActive.Tip(), count > -1 ? count : p.second.signingActiveQuorumCount);
+        auto quorums = llmq::quorumManager->ScanQuorums(p.first, ::ChainActive().Tip(), count > -1 ? count : p.second.signingActiveQuorumCount);
         for (auto& q : quorums) {
             v.push_back(q->qc.quorumHash.ToString());
         }
@@ -171,7 +171,7 @@ UniValue quorum_dkgstatus(const JSONRPCRequest& request)
     auto ret = status.ToJson(detailLevel);
 
     LOCK(cs_main);
-    int tipHeight = chainActive.Height();
+    int tipHeight = ::ChainActive().Height();
 
     UniValue minableCommitments(UniValue::VOBJ);
     for (const auto& p : Params().GetConsensus().llmqs) {
@@ -219,7 +219,7 @@ UniValue quorum_memberof(const JSONRPCRequest& request)
     const CBlockIndex* pindexTip;
     {
         LOCK(cs_main);
-        pindexTip = chainActive.Tip();
+        pindexTip = ::ChainActive().Tip();
     }
 
     auto mnList = deterministicMNManager->GetListForBlock(pindexTip);

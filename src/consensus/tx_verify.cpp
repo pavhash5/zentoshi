@@ -189,16 +189,16 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
     if (!tx.IsCoinStake())
     {
         if (nValueIn < nValueOut) {
-            return state.DoS(100, ValidationInvalidReason::CONSENSUS, false, REJECT_INVALID, "bad-txns-in-belowout", false,
-                             strprintf("value in (%s) < value out (%s)", FormatMoney(nValueIn), FormatMoney(nValueOut)));
+            return state.Invalid(ValidationInvalidReason::CONSENSUS, false, REJECT_INVALID, "bad-txns-in-belowout",
+                   strprintf("value in (%s) < value out (%s)", FormatMoney(nValueIn), FormatMoney(nValueOut)));
         }
         CAmount nTxFee = nValueIn - nValueOut;
         if (nTxFee < 0) {
-            return state.DoS(100, ValidationInvalidReason::CONSENSUS, false, REJECT_INVALID, "bad-txns-fee-negative");
+            return state.Invalid(ValidationInvalidReason::CONSENSUS, false, REJECT_INVALID, "bad-txns-fee-negative");
         }
         nFees += nTxFee;
         if (!MoneyRange(nFees)) {
-            return state.DoS(100, ValidationInvalidReason::CONSENSUS, false, REJECT_INVALID, "bad-txns-fee-outofrange");
+            return state.Invalid(ValidationInvalidReason::CONSENSUS, false, REJECT_INVALID, "bad-txns-fee-outofrange");
         }
         txfee = nFees;
     }

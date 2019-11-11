@@ -13,6 +13,7 @@
 
 class CBlockIndex;
 class CDeterministicMNList;
+class uint256;
 
 namespace boost {
 namespace signals2 {

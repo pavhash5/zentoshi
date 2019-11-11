@@ -275,12 +275,12 @@ std::map<int, std::string> GetRequiredPaymentsStrings(int nStartHeight, int nEnd
     }
 
     LOCK(cs_main);
-    int nChainTipHeight = chainActive.Height();
+    int nChainTipHeight = ::ChainActive().Height();
 
     bool doProjection = false;
     for(int h = nStartHeight; h < nEndHeight; h++) {
         if (h <= nChainTipHeight) {
-            auto payee = deterministicMNManager->GetListForBlock(chainActive[h - 1]).GetMNPayee();
+            auto payee = deterministicMNManager->GetListForBlock(::ChainActive[h - 1]).GetMNPayee();
             mapPayments.emplace(h, GetRequiredPaymentsString(h, payee));
         } else {
             doProjection = true;
@@ -335,7 +335,7 @@ bool CMasternodePayments::GetBlockTxOuts(int nBlockHeight, CAmount blockReward, 
     const CBlockIndex* pindex;
     {
         LOCK(cs_main);
-        pindex = chainActive[nBlockHeight - 1];
+        pindex = ::ChainActive[nBlockHeight - 1];
     }
     uint256 proTxHash;
     auto dmnPayee = deterministicMNManager->GetListForBlock(pindex).GetMNPayee();

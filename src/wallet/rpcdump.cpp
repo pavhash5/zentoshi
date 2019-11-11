@@ -809,15 +809,15 @@ UniValue dumpwallet(const JSONRPCRequest& request)
     // produce output
     file << strprintf("# Wallet dump created by Dash Core %s\n", CLIENT_BUILD);
     file << strprintf("# * Created on %s\n", EncodeDumpTime(GetTime()));
-    file << strprintf("# * Best block at time of backup was %i (%s),\n", chainActive.Height(), chainActive.Tip()->GetBlockHash().ToString());
-    file << strprintf("#   mined on %s\n", EncodeDumpTime(chainActive.Tip()->GetBlockTime()));
+    file << strprintf("# * Best block at time of backup was %i (%s),\n", ::ChainActive().Height(), ::ChainActive().Tip()->GetBlockHash().ToString());
+    file << strprintf("#   mined on %s\n", EncodeDumpTime(::ChainActive().Tip()->GetBlockTime()));
     file << "\n";
 
     UniValue obj(UniValue::VOBJ);
     obj.push_back(Pair("dashcoreversion", CLIENT_BUILD));
-    obj.push_back(Pair("lastblockheight", chainActive.Height()));
-    obj.push_back(Pair("lastblockhash", chainActive.Tip()->GetBlockHash().ToString()));
-    obj.push_back(Pair("lastblocktime", EncodeDumpTime(chainActive.Tip()->GetBlockTime())));
+    obj.push_back(Pair("lastblockheight", ::ChainActive().Height()));
+    obj.push_back(Pair("lastblockhash", ::ChainActive().Tip()->GetBlockHash().ToString()));
+    obj.push_back(Pair("lastblocktime", EncodeDumpTime(::ChainActive().Tip()->GetBlockTime())));
 
     // add the base58check encoded extended master if the wallet uses HD
     CKeyID seed_id = pwallet->GetHDChain().seed_id;

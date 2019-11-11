@@ -378,7 +378,7 @@ static UniValue getdifficulty(const JSONRPCRequest& request)
 
     LOCK(cs_main);
 
-    CBlockIndex* tip = chainActive.Tip();
+    CBlockIndex* tip = ::ChainActive().Tip();
     const Consensus::Params& consensusParams = Params().GetConsensus();
 
     UniValue obj(UniValue::VOBJ);

@@ -795,7 +795,7 @@ bool CSigningManager::AsyncSignIfMember(Consensus::LLMQType llmqType, const uint
     int tipHeight;
     {
         LOCK(cs_main);
-        tipHeight = chainActive.Height();
+        tipHeight = ::ChainActive().Height();
     }
 
     // This might end up giving different results on different members
@@ -876,10 +876,10 @@ std::vector<CQuorumCPtr> CSigningManager::GetActiveQuorumSet(Consensus::LLMQType
     {
         LOCK(cs_main);
         int startBlockHeight = signHeight - SIGN_HEIGHT_OFFSET;
-        if (startBlockHeight > chainActive.Height()) {
+        if (startBlockHeight > ::ChainActive().Height()) {
             return {};
         }
-        pindexStart = chainActive[startBlockHeight];
+        pindexStart = ::ChainActive[startBlockHeight];
     }
 
     return quorumManager->ScanQuorums(llmqType, pindexStart, poolSize);

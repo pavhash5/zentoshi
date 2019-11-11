@@ -62,7 +62,7 @@ bool ProcessSpecialTx(const CTransaction& tx, const CBlockIndex* pindex, CValida
         return true; // handled per block
     }
 
-    return state.DoS(100, false, REJECT_INVALID, "bad-tx-type-proc");
+    return state.Invalid(ValidationInvalidReason::CBTX_INVALID, false, , REJECT_INVALID, "bad-tx-type-proc");
 }
 
 bool UndoSpecialTx(const CTransaction& tx, const CBlockIndex* pindex)

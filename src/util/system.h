@@ -30,27 +30,10 @@
 #include <set>
 #include <stdint.h>
 #include <string>
-#include <unordered_set>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include <boost/lexical_cast.hpp>
 #include <boost/thread/condition_variable.hpp> // for boost::thread_interrupted
-#include <boost/filesystem/path.hpp>
-#include <boost/signals2/signal.hpp>
-#include <boost/thread/exceptions.hpp>
-
-// Debugging macros
-
-// Uncomment the following line to enable debugging messages
-// or enable on a per file basis prior to inclusion of util.h
-//#define ENABLE_DASH_DEBUG
-#ifdef ENABLE_DASH_DEBUG
-#define DBG( x ) x
-#else
-#define DBG( x ) 
-#endif
 
 // Application startup time (used for uptime calculation)
 int64_t GetStartupTime();
@@ -58,8 +41,6 @@ int64_t GetStartupTime();
 extern bool fMasternodeMode;
 extern bool fLiteMode;
 extern int nWalletBackups;
-
-static const bool DEFAULT_LOGTHREADNAMES = false;
 
 extern bool fDebug;
 extern bool fPrintToConsole;
@@ -102,19 +83,22 @@ void ReleaseDirectoryLocks();
 
 bool TryCreateDirectories(const fs::path& p);
 fs::path GetDefaultDataDir();
-const fs::path &GetBlocksDir(bool fNetSpecific = true);
+// The blocks directory is always net specific.
+const fs::path &GetBlocksDir();
 const fs::path &GetDataDir(bool fNetSpecific = true);
-const fs::path &GetBackupsDir(bool fNetSpecific = true);
+// Return true if -datadir option points to a valid directory or is not specified.
+bool CheckDataDirOption();
 /** Tests only */
 void ClearDatadirCache();
 fs::path GetConfigFile(const std::string& confPath);
 fs::path GetMasternodeConfigFile();
+void SetThreadPriority(int nPriority);
 #ifdef WIN32
 fs::path GetSpecialFolderPath(int nFolder, bool fCreate = true);
 #endif
 #if HAVE_SYSTEM
 void runCommand(const std::string& strCommand);
-void SetThreadPriority(int nPriority);
+#endif
 
 /**
  * Most paths passed as configuration arguments are treated as relative to

@@ -355,10 +355,21 @@ uint64_t ReadCompactSize(Stream& is)
  * negative numbers in a backwards compatible way, and additional modes could be
  * added to support different varint formats (e.g. zigzag encoding).
  */
+enum class VarIntMode { DEFAULT, NONNEGATIVE_SIGNED };
 
-template<typename I>
+template <VarIntMode Mode, typename I>
+struct CheckVarIntMode {
+    constexpr CheckVarIntMode()
+    {
+        static_assert(Mode != VarIntMode::DEFAULT || std::is_unsigned<I>::value, "Unsigned type required with mode DEFAULT.");
+        static_assert(Mode != VarIntMode::NONNEGATIVE_SIGNED || std::is_signed<I>::value, "Signed type required with mode NONNEGATIVE_SIGNED.");
+    }
+};
+
+template<VarIntMode Mode, typename I>
 inline unsigned int GetSizeOfVarInt(I n)
 {
+    CheckVarIntMode<Mode, I>();
     int nRet = 0;
     while(true) {
         nRet++;
@@ -372,9 +383,10 @@ inline unsigned int GetSizeOfVarInt(I n)
 template<typename I>
 inline void WriteVarInt(CSizeComputer& os, I n);
 
-template<typename Stream, typename I>
+template<typename Stream, VarIntMode Mode, typename I>
 void WriteVarInt(Stream& os, I n)
 {
+    CheckVarIntMode<Mode, I>();
     unsigned char tmp[(sizeof(n)*8+6)/7];
     int len=0;
     while(true) {
@@ -389,28 +401,55 @@ void WriteVarInt(Stream& os, I n)
     } while(len--);
 }
 
-template<typename Stream, typename I>
+template<typename Stream, VarIntMode Mode, typename I>
 I ReadVarInt(Stream& is)
 {
+    CheckVarIntMode<Mode, I>();
     I n = 0;
     while(true) {
         unsigned char chData = ser_readdata8(is);
+        if (n > (std::numeric_limits<I>::max() >> 7)) {
+           throw std::ios_base::failure("ReadVarInt(): size too large");
+        }
         n = (n << 7) | (chData & 0x7F);
-        if (chData & 0x80)
+        if (chData & 0x80) {
+            if (n == std::numeric_limits<I>::max()) {
+                throw std::ios_base::failure("ReadVarInt(): size too large");
+            }
             n++;
-        else
+        } else {
             return n;
+        }
     }
 }
 
+#define VARINT(obj, ...) WrapVarInt<__VA_ARGS__>(REF(obj))
 #define FLATDATA(obj) REF(CFlatData((char*)&(obj), (char*)&(obj) + sizeof(obj)))
 #define FIXEDBITSET(obj, size) REF(CFixedBitSet(REF(obj), (size)))
 #define DYNBITSET(obj) REF(CDynamicBitSet(REF(obj)))
 #define FIXEDVARINTSBITSET(obj, size) REF(CFixedVarIntsBitSet(REF(obj), (size)))
 #define AUTOBITSET(obj, size) REF(CAutoBitSet(REF(obj), (size)))
-#define VARINT(obj) REF(WrapVarInt(REF(obj)))
 #define COMPACTSIZE(obj) REF(CCompactSize(REF(obj)))
 #define LIMITED_STRING(obj,n) LimitedString< n >(REF(obj))
+
+template<VarIntMode Mode, typename I>
+class CVarInt
+{
+protected:
+    I &n;
+public:
+    explicit CVarInt(I& nIn) : n(nIn) { }
+
+    template<typename Stream>
+    void Serialize(Stream &s) const {
+        WriteVarInt<Stream,Mode,I>(s, n);
+    }
+
+    template<typename Stream>
+    void Unserialize(Stream& s) {
+        n = ReadVarInt<Stream,Mode,I>(s);
+    }
+};
 
 /** Serialization wrapper class for big-endian integers.
  *
@@ -649,27 +688,8 @@ public:
     }
 };
 
-template<typename I>
-class CVarInt
-{
-protected:
-    I &n;
-public:
-    CVarInt(I& nIn) : n(nIn) { }
-
-    template<typename Stream>
-    void Serialize(Stream &s) const {
-        WriteVarInt<Stream,I>(s, n);
-    }
-
-    template<typename Stream>
-    void Unserialize(Stream& s) {
-        n = ReadVarInt<Stream,I>(s);
-    }
-};
-
-template<typename I>
-CVarInt<I> WrapVarInt(I& n) { return CVarInt<I>(n); }
+template<VarIntMode Mode=VarIntMode::DEFAULT, typename I>
+CVarInt<Mode, I> WrapVarInt(I& n) { return CVarInt<Mode, I>{n}; }
 
 template<typename I>
 BigEndian<I> WrapBigEndian(I& n) { return BigEndian<I>(n); }

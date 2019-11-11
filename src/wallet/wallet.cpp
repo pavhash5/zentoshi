@@ -2273,7 +2273,7 @@ CBlockIndex* CWallet::ScanForWalletTransactions(CBlockIndex* pindexStart, bool f
                 // in case the tip has changed, update progress max
                 progress_end = chain().guessVerificationProgress(tip_hash);
             }
-            pindex = chainActive.Next(pindex);
+            pindex = ::ChainActive().Next(pindex);
         }
     }
     ShowProgress(strprintf("%s " + _("Rescanning...").translated, GetDisplayName()), 100); // hide progress dialog in GUI
@@ -3749,7 +3749,7 @@ bool CWallet::CreateTransaction(interfaces::Chain::Lock& locked_chain, const std
     // enough, that fee sniping isn't a problem yet, but by implementing a fix
     // now we ensure code won't be written that makes assumptions about
     // nLockTime that preclude a fix later.
-    txNew.nLockTime = chainActive.Height();
+    txNew.nLockTime = ::ChainActive().Height();
 
     // Secondly occasionally randomly pick a nLockTime even further back, so
     // that transactions that are delayed after signing for whatever reason,
@@ -3758,7 +3758,7 @@ bool CWallet::CreateTransaction(interfaces::Chain::Lock& locked_chain, const std
     if (GetRandInt(10) == 0)
         txNew.nLockTime = std::max(0, (int)txNew.nLockTime - GetRandInt(100));
 
-    assert(txNew.nLockTime <= (unsigned int)chainActive.Height());
+    assert(txNew.nLockTime <= (unsigned int)::ChainActive().Height());
     assert(txNew.nLockTime < LOCKTIME_THRESHOLD);
     FeeCalculation feeCalc;
     CAmount nFeeNeeded;
@@ -4251,7 +4251,7 @@ bool CWallet::CreateCoinStakeKernel(CScript &kernelScript, const CScript &stakeS
         if (fValidStake)
         {
             //Double check that this will pass time requirements
-            if (nTryTime <= chainActive.Tip()->GetMedianTimePast()) {
+            if (nTryTime <= ::ChainActive().Tip()->GetMedianTimePast()) {
                 LogPrintf("CreateCoinStakeKernel() : kernel found, but it is too far in the past \n");
                 continue;
             }
@@ -4366,7 +4366,7 @@ bool CWallet::CreateCoinStake(const CKeyStore& keystore, unsigned int nBits, CAm
     // get some info back to pass to getblocktemplate
     std::vector<CTxOut> txoutMasternodeRet;
     std::vector<CTxOut> voutSuperblockRet;
-    int nHeight = chainActive.Tip()->nHeight + 1;
+    int nHeight = ::ChainActive().Tip()->nHeight + 1;
     LogPrintf("CreateCoinStake -- nBlockHeight %d blockReward %lld txNew %s", nHeight, blockReward, txNew.ToString());
     nLastStakeSetUpdate = 0; //this will trigger stake set to repopulate next round
     return true;
@@ -5685,7 +5685,7 @@ std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(interfaces::Chain& chain,
     LOCK(walletInstance->cs_wallet);
 
     int rescan_height = 0;
-    CBlockIndex *pindexRescan = chainActive.Genesis();
+    CBlockIndex *pindexRescan = ::ChainActive().Genesis();
     if (!gArgs.GetBoolArg("-rescan", false))
     {
         WalletBatch batch(*walletInstance->database);
@@ -5703,7 +5703,7 @@ std::shared_ptr<CWallet> CWallet::CreateWalletFromFile(interfaces::Chain& chain,
     } else {
         walletInstance->m_last_block_processed.SetNull();
     }
-    if (chainActive.Tip() && chainActive.Tip() != pindexRescan)
+    if (::ChainActive().Tip() && ::ChainActive().Tip() != pindexRescan)
     {
         // We can't rescan beyond non-pruned blocks, stop and throw an error.
         // This might happen if a user uses an old wallet within a pruned node

@@ -1,8 +1,9 @@
 #include <blocksigner.h>
-#include <keystore.h>
-#include <primitives/block.h>
-#include <util/strencodings.h>
 #include <messagesigner.h>
+#include <primitives/block.h>
+#include <script/sign.h>
+#include <script/signingprovider.h>
+#include <util/strencodings.h>
 #include <util/system.h>
 
 typedef std::vector<uint8_t> valtype;
@@ -37,7 +38,7 @@ bool GetKeyIDFromUTXO(const CTxOut& txout, CKeyID& keyID)
     return true;
 }
 
-bool SignBlock(CBlock& block, const CKeyStore& keystore)
+bool SignBlock(CBlock& block, FillableSigningProvider& keystore)
 {
     std::vector<valtype> vSolutions;
     CKeyID keyID;

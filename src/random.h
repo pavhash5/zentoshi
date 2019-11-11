@@ -70,7 +70,6 @@
  * Thread-safe.
  */
 void GetRandBytes(unsigned char* buf, int num) noexcept;
-std::chrono::microseconds GetRandMicros(std::chrono::microseconds duration_max) noexcept;
 uint64_t GetRand(uint64_t nMax) noexcept;
 std::chrono::microseconds GetRandMicros(std::chrono::microseconds duration_max) noexcept;
 int GetRandInt(int nMax) noexcept;

@@ -94,6 +94,11 @@ endif
 if BUILD_BITCOIN_TX
   bin_PROGRAMS += zentoshi-tx
 endif
+if ENABLE_WALLET
+if BUILD_BITCOIN_WALLET
+  bin_PROGRAMS += zentoshi-wallet
+endif
+endif
 
 .PHONY: FORCE check-symbols check-security
 # bitcoin core #
@@ -101,7 +106,6 @@ BITCOIN_CORE_H = \
   addrdb.h \
   activemasternode.h \
   addrman.h \
-  alert.h \
   attributes.h \
   banman.h \
   base58.h \
@@ -315,7 +319,6 @@ libzentoshi_server_a_SOURCES = \
   addrdb.cpp \
   addrman.cpp \
   addrdb.cpp \
-  alert.cpp \
   banman.cpp \
   bloom.cpp \
   blocksigner.cpp \
@@ -411,7 +414,7 @@ libzentoshi_server_a_SOURCES = \
   $(BITCOIN_CORE_H)
 
 if ENABLE_WALLET
-libbitcoin_server_a_SOURCES += wallet/init.cpp
+libzentoshi_server_a_SOURCES += wallet/init.cpp
 endif
 if !ENABLE_WALLET
 libzentoshi_server_a_SOURCES += dummywallet.cpp
@@ -439,6 +442,7 @@ libzentoshi_wallet_a_SOURCES = \
   wallet/db.cpp \
   wallet/feebumper.cpp \
   wallet/fees.cpp \
+  wallet/init.cpp \
   wallet/ismine.cpp \
   wallet/load.cpp \
   wallet/psbtwallet.cpp \
@@ -712,31 +716,32 @@ zentoshi_tx_LDADD = \
 
 zentoshi_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS) $(BLS_LIBS)
 
-# zentoshi-wallet binary #
-#zentoshi_wallet_SOURCES = zentoshi-wallet.cpp
-#zentoshi_wallet_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-#zentoshi_wallet_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-#zentoshi_wallet_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
+# zentoshi-wallet binary
+zentoshi_wallet_SOURCES = zentoshi-wallet.cpp
+zentoshi_wallet_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+zentoshi_wallet_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+zentoshi_wallet_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 
-#if TARGET_WINDOWS
-#zentoshi_wallet_SOURCES += zentoshi-wallet-res.rc
-#endif
+if TARGET_WINDOWS
+zentoshi_wallet_SOURCES += zentoshi-wallet-res.rc
+endif
 
-#zentoshi_wallet_LDADD = \
-# $(LIBBITCOIN_WALLET_TOOL) \
-# $(LIBBITCOIN_WALLET) \
-# $(LIBBITCOIN_SERVER) \
-# $(LIBBITCOIN_COMMON) \
-# $(LIBBITCOIN_CONSENSUS) \
-# $(LIBBITCOIN_UTIL) \
-# $(LIBBITCOIN_CRYPTO) \
-# $(LIBLEVELDB) \
-# $(LIBLEVELDB_SSE42) \
-# $(LIBMEMENV) \
-# $(LIBSECP256K1) \
-# $(LIBUNIVALUE)
+zentoshi_wallet_LDADD = \
+ $(LIBBITCOIN_WALLET_TOOL) \
+ $(LIBBITCOIN_WALLET) \
+ $(LIBBITCOIN_SERVER) \
+ $(LIBBITCOIN_COMMON) \
+ $(LIBBITCOIN_CONSENSUS) \
+ $(LIBBITCOIN_UTIL) \
+ $(LIBBITCOIN_CRYPTO) \
+ $(LIBLEVELDB) \
+ $(LIBLEVELDB_SSE42) \
+ $(LIBMEMENV) \
+ $(LIBSECP256K1) \
+ $(LIBUNIVALUE)
 
-#zentoshi_wallet_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(BLS_LIBS)
+zentoshi_wallet_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(CRYPTO_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(MINIUPNPC_LIBS) $(ZMQ_LIBS) $(BLS_LIBS)
+#
 
 # bitcoinconsensus library #
 if BUILD_BITCOIN_LIBS
